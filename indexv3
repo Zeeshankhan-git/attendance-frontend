@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: #f7fafc;
+            color: #2d3748;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            line-height: 1.6;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: #1a202c;
+            color: #e2e8f0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            position: relative;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 32px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #edf2f7;
+            transition: background 0.3s ease, border 0.3s ease;
+        }
+
+        body.dark-mode .card {
+            background: #2d3748;
+            border: 1px solid #4a5568;
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-top: 20px;
+            color: #1a202c;
+            font-size: 1.25rem;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .section-title {
+            color: #e2e8f0;
+        }
+
+        input, textarea {
+            transition: all 0.2s ease;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            color: #2d3748;
+            font-size: 1rem;
+            font-family: 'Roboto', 'Inter', sans-serif;
+            resize: vertical;
+        }
+
+        body.dark-mode input,
+        body.dark-mode textarea {
+            background: #2d3748;
+            border: 1px solid #4a5568;
+            color: #e2e8f0;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
+        }
+
+        button {
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            font-family: 'Roboto', 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        button.bg-indigo-600 {
+            background: #3182ce;
+            color: #ffffff;
+            padding: 10px 24px;
+            min-height: 44px;
+            width: 100%;
+        }
+
+        button.bg-indigo-600:hover {
+            background: #2b6cb0;
+        }
+
+        button.bg-gray-700 {
+            background: #4a5568;
+            color: #ffffff;
+            padding: 8px 20px;
+            min-height: 40px;
+        }
+
+        button.bg-gray-700:hover {
+            background: #2d3748;
+        }
+
+        body.dark-mode button.bg-gray-700 {
+            background: #718096;
+        }
+
+        body.dark-mode button.bg-gray-700:hover {
+            background: #4a5568;
+        }
+
+        button.bg-red-600 {
+            background: #e53e3e;
+            color: #ffffff;
+            padding: 8px 20px;
+            min-height: 40px;
+        }
+
+        button.bg-red-600:hover {
+            background: #c53030;
+        }
+
+        button.small-btn {
+            padding: 6px 16px;
+            font-size: 14px;
+            min-height: 36px;
+        }
+
+        canvas {
+            border: 2px solid #e2e8f0;
+            background: #ffffff;
+            border-radius: 8px;
+            width: 100%;
+            height: 150px;
+            touch-action: none;
+            transition: border 0.3s ease, background 0.3s ease;
+        }
+
+        body.dark-mode canvas {
+            border: 2px solid #4a5568;
+            background: #edf2f7;
+        }
+
+        .camera-box {
+            width: 100%;
+            max-width: 480px;
+            height: 360px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            background: #000;
+            transition: border 0.3s ease;
+        }
+
+        body.dark-mode .camera-box {
+            border: 1px solid #4a5568;
+        }
+
+        .camera-box video,
+        .camera-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .camera-box img {
+            z-index: 10;
+        }
+
+        .camera-box video {
+            z-index: 5;
+        }
+
+        .info-box {
+            background: #f7fafc;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-size: 0.875rem;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+            transition: background 0.3s ease, color 0.3s ease, border 0.3s ease;
+        }
+
+        body.dark-mode .info-box {
+            background: #2d3748;
+            color: #cbd5e0;
+            border: 1px solid #4a5568;
+        }
+
+        .info-box.weather-box {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .info-box.weather-box:hover {
+            background: #e2e8f0;
+        }
+
+        body.dark-mode .info-box.weather-box:hover {
+            background: #4a5568;
+        }
+
+        .weather-icon {
+            width: 20px;
+            height: 20px;
+            fill: #4a5568;
+            transition: fill 0.3s ease;
+        }
+
+        body.dark-mode .weather-icon {
+            fill: #cbd5e0;
+        }
+
+        .weather-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .center {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .error-text {
+            color: #e53e3e;
+            font-size: 0.875rem;
+            margin-top: 8px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .error-text {
+            color: #fc8181;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 420px;
+            color: #2d3748;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body.dark-mode .modal-content {
+            background: #2d3748;
+            color: #e2e8f0;
+        }
+
+        .modal-content button {
+            background: #e53e3e;
+            color: #ffffff;
+            padding: 10px 24px;
+            min-height: 44px;
+            width: 100%;
+            margin-top: 16px;
+        }
+
+        .modal-content button:hover {
+            background: #c53030;
+        }
+
+        h1, h2, h3 {
+            color: #1a202c;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode h1,
+        body.dark-mode h2,
+        body.dark-mode h3 {
+            color: #e2e8f0;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+        }
+
+        a {
+            color: #3182ce;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #2b6cb0;
+        }
+
+        body.dark-mode a {
+            color: #63b3ed;
+        }
+
+        body.dark-mode a:hover {
+            color: #4299e1;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s ease, border 0.3s ease;
+            z-index: 1001;
+        }
+
+        body.dark-mode .theme-toggle {
+            background: #4a5568;
+            border: 1px solid #718096;
+        }
+
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            fill: #4a5568;
+            transition: fill 0.3s ease;
+        }
+
+        body.dark-mode .theme-toggle svg {
+            fill: #e2e8f0;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="theme-toggle" onclick="toggleTheme()">
+    <svg id="theme-icon" viewBox="0 0 24 24">
+        <path d="M12 2v2m0 16v2m10-10h-2m-16 0H2m17.07-7.07l-1.42 1.42M5.35 17.65l-1.42 1.42M17.65 17.65l-1.42-1.42M5.35 5.35l-1.42-1.42M12 6a6 6 0 100 12 6 6 0 000-12z"/>
+    </svg>
+</div>
+
+<section id="signupPage" class="page hidden" data-page>
+    <div class="card">
+        <h2 class="mb-6">Sign Up</h2>
+        <input type="text" id="signupUser" placeholder="Username" class="mb-4">
+        <input type="password" id="signupPass" placeholder="Password" class="mb-4">
+        <div id="signupError" class="error-text hidden"></div>
+        <button onclick="handleSignup()" class="bg-indigo-600">Sign Up</button>
+        <p class="text-sm mt-4 text-center text-gray-600">Already have an account? <a href="#" onclick="showPage('loginPage')">Login</a></p>
+    </div>
+</section>
+
+<section id="loginPage" class="page" data-page>
+    <div class="card">
+        <h2 class="mb-6">Login</h2>
+        <input type="text" id="loginUser" placeholder="Username" class="mb-4">
+        <input type="password" id="loginPass" placeholder="Password" class="mb-4">
+        <div id="loginError" class="error-text hidden"></div>
+        <button onclick="handleLogin()" class="bg-indigo-600">Login</button>
+<!--        <button onclick="handleAdminLogin()" class="bg-red-600 mt-3">Admin Login</button>-->
+        <button onclick="closeApp()" class="bg-gray-700 mt-3">Close App</button>
+        <p class="text-sm mt-4 text-center text-gray-600">Forgot Password? <a href="#" class="text-red-500 hover:text-red-600">Reset</a></p>
+        <p class="text-sm mt-2 text-center text-gray-600">Don't have an account? <a href="#" onclick="showPage('signupPage')">Sign Up</a></p>
+    </div>
+</section>
+
+<section id="landingPage" class="page hidden" data-page>
+    <div class="text-center">
+        <h1 class="mb-8">Hello, <span id="landingUsername"></span>!</h1>
+        <button onclick="showPage('parametersPage', 'attendance')" class="bg-indigo-600 mb-4" style="width: 200px;">Mark Attendance</button><br>
+        <button onclick="showPage('parametersPage', 'exit')" class="bg-indigo-600 mb-4" style="width: 200px;">Mark Exit</button><br>
+        <button onclick="logout()" class="bg-gray-700 mt-6" style="width: 200px;">Logout</button>
+    </div>
+</section>
+
+<section id="homePage" class="page hidden" data-page>
+    <div class="text-center">
+        <h1 class="mb-8">Welcome, <span id="usernameDisplay"></span></h1>
+        <button onclick="showPage('landingPage')" class="bg-indigo-600 mt-6" style="width: 200px;">Back to Dashboard</button><br>
+        <button onclick="logout()" class="bg-gray-700 mt-4" style="width: 200px;">Logout</button>
+    </div>
+</section>
+
+<section id="parametersPage" class="page hidden" data-page>
+    <div class="card">
+        <h2 class="mb-6" id="parametersTitle"></h2>
+        <div class="info-box mb-4">
+            <p><strong>Date & Time:</strong> <span id="timestamp"></span></p>
+        </div>
+        <div class="info-box mb-4">
+            <p><strong>Location:</strong> <span id="location">13°19'35"N 77°7'44"E</span></p>
+            <p><strong>Address:</strong> <span id="address">Fetching...</span></p>
+            <p class="info-box weather-box" onclick="openGoogleMaps()">
+                <span class="weather-content">
+                    <strong>Weather:</strong> <span id="weather">Fetching...</span>
+                    <svg class="weather-icon" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                    </svg>
+                </span>
+                <button onclick="event.stopPropagation(); setCustomLocation();" class="bg-indigo-600 small-btn">Set Custom Location</button>
+            </p>
+        </div>
+        <h3 class="section-title">Selfie</h3>
+        <div class="camera-box">
+            <video id="cameraPreview" autoplay playsinline></video>
+            <img id="capturedImage" class="hidden">
+        </div>
+        <div class="center">
+            <button id="startCameraBtn" onclick="startCamera()" class="bg-indigo-600 mt-4">Start Camera</button>
+            <button onclick="captureImage()" class="bg-gray-700 mt-4 hidden" id="captureBtn">Take Selfie</button>
+            <button onclick="clearImage()" class="bg-gray-700 mt-4 hidden" id="clearBtn">Clear Image</button>
+        </div>
+        <h3 class="section-title mt-6">Signature</h3>
+        <canvas id="signaturePad" width="340" height="150"></canvas>
+        <div class="center"><button onclick="clearSignature()" class="bg-gray-700 mt-4">Reset</button></div>
+        <h3 class="section-title mt-6">Description</h3>
+        <textarea id="descriptionBox" placeholder="Enter any additional notes here (optional)" rows="4" class="mt-2"></textarea>
+        <div id="parametersError" class="error-text hidden"></div>
+        <div class="center">
+            <button onclick="submitAction()" class="bg-indigo-600 mt-6" id="submitBtn">Submit</button>
+        </div>
+    </div>
+</section>
+
+<section id="adminPage" class="page hidden" data-page>
+    <div class="card">
+        <h2 class="mb-6">Admin Dashboard</h2>
+        <div id="adminRecords" class="info-box mb-4">
+            <p>Loading records...</p>
+        </div>
+        <div class="center">
+            <button onclick="fetchAdminRecords()" class="bg-indigo-600 mt-4">Refresh Records</button>
+            <button onclick="logout()" class="bg-gray-700 mt-4">Logout</button>
+        </div>
+    </div>
+</section>
+
+<div id="mismatchModal" class="modal hidden">
+    <div class="modal-content">
+        <h3 class="text-lg font-semibold">Mismatch Detected</h3>
+        <p id="mismatchMessage" class="mt-3"></p>
+        <button onclick="closeModal()">Close</button>
+    </div>
+</div>
+
+<script defer>
+    const API_BASE_URL = "http://localhost:8080/api";
+    let currentAction = 'attendance';
+    let currentLat = 13.326389; // Approx lat for 13°19'35"N
+    let currentLon = 77.128889; // Approx lon for 77°7'44"E
+
+    window.addEventListener('load', () => {
+        const canvas = document.getElementById("signaturePad");
+        if (!canvas.getContext) {
+            showError('parametersError', 'Canvas not supported by this browser');
+        }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            document.getElementById("startCameraBtn").disabled = true;
+            showError('parametersError', 'Camera not supported by this browser');
+        }
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            updateThemeIcon(true);
+        }
+        showPage('loginPage');
+        updateTimestamp(); // Start the real-time clock
+    });
+
+    function toggleTheme() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        updateThemeIcon(isDark);
+    }
+
+    function updateThemeIcon(isDark) {
+        const themeIcon = document.getElementById('theme-icon');
+        if (isDark) {
+            themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+        } else {
+            themeIcon.innerHTML = '<path d="M12 2v2m0 16v2m10-10h-2m-16 0H2m17.07-7.07l-1.42 1.42M5.35 17.65l-1.42 1.42M17.65 17.65l-1.42-1.42M5.35 5.35l-1.42-1.42M12 6a6 6 0 100 12 6 6 0 000-12z"/>';
+        }
+    }
+
+    function updateTimestamp() {
+        const timestampEl = document.getElementById("timestamp");
+        setInterval(() => {
+            const now = new Date();
+            timestampEl.innerText = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        }, 1000); // Update every second
+    }
+
+    function showPage(pageId, action = null) {
+        document.querySelectorAll("[data-page]").forEach(section => section.classList.add("hidden"));
+        const targetPage = document.getElementById(pageId);
+        if (!targetPage) {
+            console.error(`Page with ID ${pageId} not found`);
+            return;
+        }
+        targetPage.classList.remove("hidden");
+
+        if (pageId !== 'parametersPage') {
+            const video = document.getElementById("cameraPreview");
+            if (video && video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+        }
+
+        if (pageId === 'parametersPage') {
+            currentAction = action || 'attendance';
+            const username = localStorage.getItem("loggedInUser") || "Unknown";
+            document.getElementById("parametersTitle").innerText = `${currentAction === 'attendance' ? 'Mark Attendance for' : 'Mark Exit for'} ${username}`;
+            document.getElementById("submitBtn").innerText = currentAction === 'attendance' ? 'Submit Attendance' : 'Submit Exit';
+            getLocation();
+            resetParametersPage();
+            startCamera();
+        }
+        if (pageId === 'homePage') {
+            document.getElementById("usernameDisplay").innerText = localStorage.getItem("loggedInUser") || "Unknown";
+        }
+        if (pageId === 'signupPage' || pageId === 'loginPage') {
+            clearErrors();
+            clearSignature();
+        }
+        if (pageId === 'adminPage') {
+            fetchAdminRecords();
+        }
+    }
+
+    function clearErrors() {
+        ['signupError', 'loginError', 'parametersError'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.add('hidden');
+                el.innerText = '';
+            }
+        });
+    }
+
+    function showError(elementId, message) {
+        const errorEl = document.getElementById(elementId);
+        if (errorEl) {
+            errorEl.innerText = message;
+            errorEl.classList.remove('hidden');
+        }
+    }
+
+    function resetParametersPage() {
+        const video = document.getElementById("cameraPreview");
+        const img = document.getElementById("capturedImage");
+        const captureBtn = document.getElementById("captureBtn");
+        const startCameraBtn = document.getElementById("startCameraBtn");
+        const clearBtn = document.getElementById("clearBtn");
+        const descriptionBox = document.getElementById("descriptionBox");
+
+        if (video && video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
+        video.classList.add("hidden");
+        img.classList.add("hidden");
+        img.src = "";
+        captureBtn.classList.add("hidden");
+        startCameraBtn.classList.remove("hidden");
+        clearBtn.classList.add("hidden");
+        clearSignature();
+        if (descriptionBox) descriptionBox.value = "";
+        clearErrors();
+    }
+
+    async function handleSignup() {
+        const username = document.getElementById('signupUser')?.value.trim();
+        const password = document.getElementById('signupPass')?.value.trim();
+
+        if (!username || !password) {
+            showError('signupError', 'Please enter both username and password');
+            return;
+        }
+        if (username.length < 3) {
+            showError('signupError', 'Username must be at least 3 characters');
+            return;
+        }
+        if (password.length < 6) {
+            showError('signupError', 'Password must be at least 6 characters');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Signup failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.status === 'success') {
+                alert("Signup Successful!");
+                document.getElementById('signupUser').value = '';
+                document.getElementById('signupPass').value = '';
+                showPage("loginPage");
+            } else {
+                showError('signupError', data.message || 'Signup failed');
+            }
+        } catch (err) {
+            showError('signupError', err.message.includes('Failed to fetch') ? 'Cannot connect to server. Ensure backend is running at http://localhost:8080' : err.message);
+        }
+    }
+
+    async function handleLogin() {
+        const username = document.getElementById('loginUser')?.value.trim();
+        const password = document.getElementById('loginPass')?.value.trim();
+
+        if (!username || !password) {
+            showError('loginError', 'Please enter both username and password');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Login failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.status === 'success') {
+                localStorage.setItem("loggedInUser", data.username);
+                localStorage.setItem("isAdmin", "false");
+                document.getElementById("landingUsername").innerText = data.username;
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+                showPage("landingPage");
+            } else {
+                showError('loginError', data.message || 'Login failed');
+            }
+        } catch (err) {
+            showError('loginError', err.message.includes('Failed to fetch') ? 'Cannot connect to server. Ensure backend is running at http://localhost:8080' : err.message);
+        }
+    }
+
+    async function handleAdminLogin() {
+        const username = document.getElementById('loginUser')?.value.trim();
+        const password = document.getElementById('loginPass')?.value.trim();
+
+        if (!username || !password) {
+            showError('loginError', 'Please enter both username and password');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Admin login failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.status === 'success' && data.isAdmin) {
+                localStorage.setItem("loggedInUser", data.username);
+                localStorage.setItem("isAdmin", "true");
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+                showPage("adminPage");
+            } else {
+                showError('loginError', data.message || 'Admin login failed');
+            }
+        } catch (err) {
+            showError('loginError', err.message.includes('Failed to fetch') ? 'Cannot connect to server. Ensure backend is running at http://localhost:8080' : err.message);
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem("loggedInUser");
+        localStorage.removeItem("isAdmin");
+        clearSignature();
+        showPage("loginPage");
+    }
+
+    function closeApp() {
+        if (navigator.userAgent.includes('Android') && typeof AndroidInterface !== 'undefined') {
+            AndroidInterface.closeApp();
+        } else {
+            window.close();
+            alert("Close works only in Android apps or specific browser contexts.");
+        }
+    }
+
+    async function fetchAdminRecords() {
+        const recordsDiv = document.getElementById("adminRecords");
+        if (localStorage.getItem("isAdmin") !== "true") {
+            recordsDiv.innerHTML = "<p>You do not have admin access.</p>";
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/records`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch records: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.status === 'success' && data.records) {
+                recordsDiv.innerHTML = data.records.map(record => `
+                    <p><strong>User:</strong> ${record.username} | <strong>Action:</strong> ${record.action} | <strong>Time:</strong> ${new Date(record.timestamp).toLocaleString()}</p>
+                `).join('') || "<p>No records found.</p>";
+            } else {
+                recordsDiv.innerHTML = "<p>Failed to load records.</p>";
+            }
+        } catch (err) {
+            recordsDiv.innerHTML = `<p>Error: ${err.message.includes('Failed to fetch') ? 'Cannot connect to server. Ensure backend is running at http://localhost:8080' : err.message}</p>`;
+        }
+    }
+
+    async function submitAction() {
+        const username = localStorage.getItem("loggedInUser");
+        const location = document.getElementById("location")?.innerText;
+        const signature = document.getElementById("signaturePad")?.toDataURL("image/png");
+        const image = document.getElementById("capturedImage")?.src || "";
+        const description = document.getElementById("descriptionBox")?.value.trim() || "";
+        const endpoint = currentAction === 'attendance' ? '/attendance' : '/exit';
+
+        if (!username) {
+            showError('parametersError', 'Please login first');
+            return;
+        }
+        if (!location || location === 'Fetching...' || location.includes('Unable')) {
+            showError('parametersError', 'Location not available');
+            return;
+        }
+
+        const canvas = document.getElementById("signaturePad");
+        const emptyCanvas = document.createElement("canvas");
+        emptyCanvas.width = canvas.width;
+        emptyCanvas.height = canvas.height;
+        if (canvas.toDataURL('image/png') === emptyCanvas.toDataURL('image/png')) {
+            showError('parametersError', 'Please provide a signature');
+            return;
+        }
+
+        if (!image) {
+            showError('parametersError', 'Please capture an image');
+            return;
+        }
+
+        const deviceInfo = {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language || navigator.userLanguage,
+            screenResolution: `${window.screen.width}x${window.screen.height}`,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timestamp: new Date().toISOString()
+        };
+
+        let imei = "Not Available";
+        if (typeof AndroidInterface !== 'undefined' && AndroidInterface.getIMEI) {
+            try {
+                imei = AndroidInterface.getIMEI();
+            } catch (err) {
+                console.error('Failed to get IMEI:', err);
+            }
+        }
+
+        const submissionData = {
+            username,
+            location,
+            signature,
+            image,
+            description,
+            deviceInfo: JSON.parse(JSON.stringify(deviceInfo)), // Ensure clean object
+            imei
+        };
+
+        console.log('Submission Data:', JSON.stringify(submissionData, null, 2));
+
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(submissionData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Server Error Response:', errorData);
+                throw new Error(errorData.message || `Submission failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.status === 'success') {
+                alert(`${currentAction === 'attendance' ? 'Attendance' : 'Exit'} marked successfully!`);
+                clearSignature();
+                clearImage();
+                document.getElementById("descriptionBox").value = "";
+                const video = document.getElementById("cameraPreview");
+                if (video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                    video.srcObject = null;
+                }
+                showPage("homePage");
+            } else {
+                showError('parametersError', data.message || 'Submission failed');
+            }
+        } catch (err) {
+            showError('parametersError', err.message.includes('Failed to fetch') ? 'Cannot connect to server. Ensure backend is running at http://localhost:8080' : err.message);
+        }
+    }
+
+    function showMismatchModal(message) {
+        const modal = document.getElementById("mismatchModal");
+        const mismatchMessage = document.getElementById("mismatchMessage");
+        mismatchMessage.innerText = message;
+        modal.classList.remove("hidden");
+    }
+
+    function closeModal() {
+        const modal = document.getElementById("mismatchModal");
+        modal.classList.add("hidden");
+    }
+
+    function convertToDMS(lat, lon) {
+        const toDMS = (coord, isLat) => {
+            const absolute = Math.abs(coord);
+            const degrees = Math.floor(absolute);
+            const minutesNotTruncated = (absolute - degrees) * 60;
+            const minutes = Math.floor(minutesNotTruncated);
+            const seconds = Math.floor((minutesNotTruncated - minutes) * 60);
+            const direction = coord >= 0 ? (isLat ? 'N' : 'E') : (isLat ? 'S' : 'W');
+            return `${degrees}°${minutes}'${seconds}"${direction}`;
+        };
+        return `${toDMS(lat, true)} ${toDMS(lon, false)}`;
+    }
+
+    function getLocation() {
+        const submitBtn = document.getElementById("submitBtn");
+        document.getElementById("location").innerText = "13°19'35\"N 77°7'44\"E"; // Hardcoded location
+        fetchAddress(currentLat, currentLon);
+        fetchWeather(currentLat, currentLon);
+        submitBtn.disabled = false;
+    }
+
+    async function fetchAddress(lat, lon) {
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+            const data = await res.json();
+            document.getElementById("address").innerText = data.display_name || "Not found";
+        } catch (err) {
+            document.getElementById("address").innerText = "Error fetching address";
+        }
+    }
+
+    async function fetchWeather(lat, lon) {
+        try {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+            const res = await fetch(url);
+            if (!res.ok) {
+                throw new Error(`Weather API responded with status: ${res.status}`);
+            }
+            const data = await res.json();
+            if (data.current_weather) {
+                const temp = data.current_weather.temperature;
+                const weatherCode = data.current_weather.weathercode;
+                const weatherDescription = getWeatherDescription(weatherCode);
+                document.getElementById("weather").innerText = `${weatherDescription}, ${temp}°C`;
+            } else {
+                document.getElementById("weather").innerText = "Sunny, 28°C"; // Default weather
+            }
+        } catch (err) {
+            document.getElementById("weather").innerText = "Sunny, 28°C"; // Default weather on error
+            console.error(err);
+        }
+    }
+
+    function getWeatherDescription(code) {
+        const weatherCodes = {
+            0: "Sunny",
+            1: "Mostly Sunny",
+            2: "Partly Cloudy",
+            3: "Cloudy",
+            45: "Fog",
+            48: "Fog",
+            51: "Light Drizzle",
+            53: "Drizzle",
+            55: "Heavy Drizzle",
+            61: "Light Rain",
+            63: "Rain",
+            65: "Heavy Rain",
+            71: "Light Snow",
+            73: "Snow",
+            75: "Heavy Snow",
+            80: "Light Rain Showers",
+            81: "Rain Showers",
+            82: "Heavy Rain Showers",
+            95: "Thunderstorm",
+            96: "Thunderstorm with Hail",
+            99: "Thunderstorm with Heavy Hail"
+        };
+        return weatherCodes[code] || "Unknown";
+    }
+
+    function openGoogleMaps() {
+        if (currentLat && currentLon) {
+            const url = `https://www.google.com/maps?q=${currentLat},${currentLon}`;
+            window.open(url, '_blank');
+        } else {
+            alert("Location data not available yet.");
+        }
+    }
+
+    function setCustomLocation() {
+        const latInput = prompt("Enter latitude (e.g., 51.5074 for London):");
+        const lonInput = prompt("Enter longitude (e.g., -0.1278 for London):");
+
+        if (latInput && lonInput) {
+            const lat = parseFloat(latInput);
+            const lon = parseFloat(lonInput);
+
+            if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                showError('parametersError', 'Invalid latitude or longitude. Latitude must be -90 to 90, longitude -180 to 180.');
+                return;
+            }
+
+            currentLat = lat;
+            currentLon = lon;
+            document.getElementById("location").innerText = convertToDMS(lat, lon);
+            fetchAddress(lat, lon);
+            fetchWeather(lat, lon);
+            document.getElementById("submitBtn").disabled = false;
+        } else {
+            alert("Please enter both latitude and longitude.");
+        }
+    }
+
+    const canvas = document.getElementById("signaturePad");
+    const ctx = canvas.getContext("2d");
+    let isDrawing = false, lastX = 0, lastY = 0;
+
+    canvas.addEventListener("mousedown", startDrawing);
+    canvas.addEventListener("mousemove", draw);
+    canvas.addEventListener("mouseup", stopDrawing);
+    canvas.addEventListener("mouseout", stopDrawing);
+    canvas.addEventListener("touchstart", startDrawingTouch, { passive: false });
+    canvas.addEventListener("touchmove", drawTouch, { passive: false });
+    canvas.addEventListener("touchend", stopDrawing);
+
+    function startDrawing(e) {
+        isDrawing = true;
+        [lastX, lastY] = [e.offsetX, e.offsetY];
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        [lastX, lastY] = [e.offsetX, e.offsetY];
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+    }
+
+    function startDrawingTouch(e) {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        [lastX, lastY] = [touch.clientX - rect.left, touch.clientY - rect.top];
+        isDrawing = true;
+    }
+
+    function drawTouch(e) {
+        e.preventDefault();
+        if (!isDrawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left, y = touch.clientY - rect.top;
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        [lastX, lastY] = [x, y];
+    }
+
+    function clearSignature() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const descriptionBox = document.getElementById("descriptionBox");
+        if (descriptionBox) descriptionBox.value = "";
+    }
+
+    async function startCamera() {
+        const video = document.getElementById("cameraPreview");
+        const img = document.getElementById("capturedImage");
+        const captureBtn = document.getElementById("captureBtn");
+        const startCameraBtn = document.getElementById("startCameraBtn");
+        const clearBtn = document.getElementById("clearBtn");
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showError('parametersError', 'Camera not supported by this browser');
+            return;
+        }
+
+        if (!window.location.protocol.includes('https') && window.location.hostname !== 'localhost') {
+            showError('parametersError', 'Camera requires a secure context (HTTPS or localhost)');
+            return;
+        }
+
+        try {
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: { ideal: "environment" },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    frameRate: { ideal: 30 }
+                }
+            });
+
+            video.srcObject = stream;
+            video.onloadedmetadata = async () => {
+                await video.play();
+                video.classList.remove("hidden");
+                img.classList.add("hidden");
+                captureBtn.classList.remove("hidden");
+                startCameraBtn.classList.add("hidden");
+                clearBtn.classList.add("hidden");
+                video.style.width = "100%";
+                video.style.height = "100%";
+                video.style.objectFit = "cover";
+            };
+        } catch (err) {
+            showError('parametersError', `Camera error: ${err.message}`);
+        }
+    }
+
+    async function captureImage() {
+        const video = document.getElementById("cameraPreview");
+        const img = document.getElementById("capturedImage");
+        const canvas = document.getElementById("signaturePad");
+        const tempCanvas = document.createElement("canvas");
+        const captureBtn = document.getElementById("captureBtn");
+        const startCameraBtn = document.getElementById("startCameraBtn");
+        const clearBtn = document.getElementById("clearBtn");
+
+        const emptyCanvas = document.createElement("canvas");
+        emptyCanvas.width = canvas.width;
+        emptyCanvas.height = canvas.height;
+        if (canvas.toDataURL('image/png') === emptyCanvas.toDataURL('image/png')) {
+            showError('parametersError', 'Please provide a signature');
+            return;
+        }
+
+        if (!video.srcObject || video.readyState < 2) {
+            showError('parametersError', 'Camera not started. Starting now...');
+            startCamera();
+            return;
+        }
+
+        try {
+            const targetWidth = 640;
+            const targetHeight = 480;
+            tempCanvas.width = targetWidth;
+            tempCanvas.height = targetHeight;
+            const ctx = tempCanvas.getContext("2d");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, targetWidth, targetHeight);
+            img.src = tempCanvas.toDataURL("image/jpeg", 0.8);
+            img.classList.remove("hidden");
+            video.classList.add("hidden");
+            captureBtn.classList.add("hidden");
+            startCameraBtn.classList.add("hidden");
+            clearBtn.classList.remove("hidden");
+        } catch (err) {
+            showError('parametersError', `Error capturing image: ${err.message}`);
+        }
+    }
+
+    function clearImage() {
+        const img = document.getElementById("capturedImage");
+        const captureBtn = document.getElementById("captureBtn");
+        const clearBtn = document.getElementById("clearBtn");
+        const video = document.getElementById("cameraPreview");
+
+        img.classList.add("hidden");
+        img.src = "";
+        captureBtn.classList.remove("hidden");
+        clearBtn.classList.add("hidden");
+        video.classList.remove("hidden");
+    }
+</script>
+</body>
+</html>
