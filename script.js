@@ -1,7 +1,5 @@
 // Automatically use correct API base URL depending on environment
-let API_BASE_URL = window.location.hostname.includes('vercel.app')
-  ? 'https://attendance-backend-1-78u4.onrender.com/api'
-  : '/api'; // will proxy to backend in local or deployed environment
+let API_BASE_URL = "http://216.24.60.0:8080/api"; // will proxy to backend in local or deployed environment
 
 let currentAction = 'attendance';
 let geolocationWatchId = null;
