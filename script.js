@@ -524,10 +524,20 @@ async function captureImage() {
     return;
   }
 
+  const width = video.videoWidth;
+  const height = video.videoHeight;
+
+  // ✅ Add resolution check
+  if (width < 320 || height < 240) {
+    showError('parametersError', `Please capture a valid selfie (min 320x240). Current: ${width}x${height}`);
+    return;
+  }
+
   const canvas = document.createElement("canvas");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext("2d").drawImage(video, 0, 0);
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext("2d").drawImage(video, 0, 0, width, height);
+
   img.src = canvas.toDataURL("image/png");
   img.classList.remove("hidden");
   video.classList.add("hidden");
