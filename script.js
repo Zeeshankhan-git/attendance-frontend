@@ -1,5 +1,5 @@
-// Automatically use correct API base URL depending on environment
-let API_BASE_URL = "http://216.24.60.0:8080/api"; // will proxy to backend in local or deployed environment
+let API_BASE_URL = "https://attendance-backend-1-78u4.onrender.com/api"; // Updated to deployed backend
+
 
 let currentAction = 'attendance';
 let geolocationWatchId = null;
@@ -179,15 +179,16 @@ function resetParametersPage() {
 }
 
 // Signup
+// SIGNUP
 async function handleSignup() {
-  const username = document.getElementById("signupUser")?.value.trim();
+  const name = document.getElementById("signupUser")?.value.trim();
   const password = document.getElementById("signupPass")?.value.trim();
 
-  if (!username || !password) {
+  if (!name || !password) {
     showError('signupError', 'Please enter both username and password');
     return;
   }
-  if (username.length < 3) {
+  if (name.length < 3) {
     showError('signupError', 'Username must be at least 3 characters');
     return;
   }
@@ -196,27 +197,35 @@ async function handleSignup() {
     return;
   }
 
+  // your backend uses "email" for login, so we'll treat name as email as before
+  const email = name;
+
   try {
+    // build a URL‑encoded form body
+    const body = new URLSearchParams({ email, password, name }).toString();
+
     const response = await fetch(`${API_BASE_URL}/signup`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body
     });
-    const data = await response.json();
-    if (response.ok && data.status === 'success') {
+
+    const text = await response.text();
+
+    if (response.ok) {
       alert("Signup successful!");
       document.getElementById("signupUser").value = "";
       document.getElementById("signupPass").value = "";
       showPage('loginPage');
     } else {
-      showError('signupError', data.message || 'Signup failed');
+      showError('signupError', text || 'Signup failed');
     }
   } catch (err) {
     showError('signupError', 'Cannot connect to server. Ensure backend is running.');
   }
 }
 
-// Login
+// LOGIN
 async function handleLogin() {
   const username = document.getElementById("loginUser")?.value.trim();
   const password = document.getElementById("loginPass")?.value.trim();
@@ -226,26 +235,35 @@ async function handleLogin() {
     return;
   }
 
+  // treat the login input as email
+  const email = username;
+
   try {
+    const body = new URLSearchParams({ email, password }).toString();
+
     const response = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body
     });
-    const data = await response.json();
-    if (response.ok && data.status === 'success') {
-      sessionStorage.setItem("loggedInUser", username);
-      sessionStorage.setItem("isAdmin", data.isAdmin ? "true" : "false");
+
+    const text = await response.text();
+
+    if (response.ok) {
+      // backend doesn’t return isAdmin yet, default to false
+      sessionStorage.setItem("loggedInUser", email);
+      sessionStorage.setItem("isAdmin", "false");
       document.getElementById("loginUser").value = "";
       document.getElementById("loginPass").value = "";
-      showPage(data.isAdmin ? 'adminPage' : 'landingPage');
+      showPage('landingPage');
     } else {
-      showError('loginError', data.message || 'Login failed');
+      showError('loginError', text || 'Login failed');
     }
   } catch (err) {
     showError('loginError', 'Cannot connect to server. Ensure backend is running.');
   }
 }
+
 
 // Logout
 function logout() {
