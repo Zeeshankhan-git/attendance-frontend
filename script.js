@@ -1,4 +1,5 @@
-let API_BASE_URL = 'https://attendance-backend-1-78u4.onrender.com'; // Default for local, override with env var
+let API_BASE_URL = 'https://attendance-backend-1-78u4.onrender.com';
+
 let currentAction = 'attendance';
 let geolocationWatchId = null;
 let currentLat = 13.326389;
