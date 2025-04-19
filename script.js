@@ -4,6 +4,8 @@ let currentAction = 'attendance';
 let geolocationWatchId = null;
 let currentLat = 13.326389;
 let currentLon = 77.128889;
+let capturedImageWidth = 0; // Store captured image dimensions
+let capturedImageHeight = 0;
 
 // Initialize on page load
 window.addEventListener('load', () => {
@@ -169,7 +171,7 @@ function resetParametersPage() {
     img.src = "";
   }
   if (captureBtn) captureBtn.classList.add("hidden");
-  if (startCameraBtn) startCameraBtn.classList.add("hidden"); // Hide start button
+  if (startCameraBtn) startCameraBtn.classList.add("hidden");
   if (clearBtn) clearBtn.classList.add("hidden");
   clearSignature();
   if (descriptionBox) descriptionBox.value = "";
@@ -329,10 +331,12 @@ async function submitAction() {
     showError('parametersError', 'Please provide a signature');
     return;
   }
-  if (!image || canvas.width < 320 || canvas.height < 240) {
-    showError('parametersError', 'Please capture a valid selfie (min 320x240)');
+  if (!image) {
+    showError('parametersError', 'Please capture a selfie');
     return;
   }
+  // Log captured image dimensions for debugging
+  console.log(`Submitting with image dimensions: ${capturedImageWidth}x${capturedImageHeight}`);
 
   const submissionData = {
     username,
@@ -417,7 +421,15 @@ async function saveCustomLocation() {
         longitude
       })
     });
-    const data = await response.json();
+    const responseText = await response.text();
+    console.log(`Save location response (raw): ${responseText}`);
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (jsonErr) {
+      console.error(`Failed to parse JSON: ${jsonErr.message}`);
+      throw new Error(`Invalid JSON response: ${responseText}`);
+    }
     if (response.ok && data.status === 'success') {
       currentLat = latitude;
       currentLon = longitude;
@@ -427,11 +439,10 @@ async function saveCustomLocation() {
       alert(`Location "${locationName}" saved successfully!`);
       closeLocationModal();
     } else {
-      showError('locationError', data.message || 'Failed to save location');
+      showError('locationError', data.message || `Failed to save location: ${responseText}`);
     }
   } catch (err) {
-    // Fallback mock response for testing if backend is not fixed
-    console.log("Mocking save location response due to server error:", err.message);
+    console.log(`Mocking save location response due to error: ${err.message}`);
     currentLat = latitude;
     currentLon = longitude;
     updateLocationDisplay(currentLat, currentLon);
@@ -472,7 +483,7 @@ async function fetchWeather(lat, lon) {
   const weatherEl = document.getElementById("weather");
   if (!weatherEl) return;
   try {
-    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`, { timeout: 5000 });
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}¤t_weather=true`, { timeout: 5000 });
     const data = await response.json();
     weatherEl.innerText = data.current_weather ? `${data.current_weather.temperature}°C` : "Not available";
   } catch {
@@ -504,8 +515,8 @@ async function startCamera() {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "user",
-        width: { min: 320, ideal: 640 }, // Request at least 320px, aim for 640px
-        height: { min: 240, ideal: 480 } // Request at least 240px, aim for 480px
+        width: { min: 320, ideal: 640 },
+        height: { min: 240, ideal: 480 }
       }
     });
     video.srcObject = stream;
@@ -515,7 +526,6 @@ async function startCamera() {
       captureBtn.classList.remove("hidden");
       startCameraBtn.classList.add("hidden");
       clearBtn.classList.add("hidden");
-      // Log resolution for debugging
       console.log(`Camera resolution: ${video.videoWidth}x${video.videoHeight}`);
     };
   } catch (err) {
@@ -555,6 +565,11 @@ async function captureImage() {
   startCameraBtn.classList.add("hidden");
   clearBtn.classList.remove("hidden");
 
+  // Store image dimensions
+  capturedImageWidth = width;
+  capturedImageHeight = height;
+  console.log(`Captured image dimensions set: ${capturedImageWidth}x${capturedImageHeight}`);
+
   video.srcObject.getTracks().forEach(track => track.stop());
   video.srcObject = null;
 }
@@ -570,6 +585,9 @@ function clearImage() {
   }
   captureBtn.classList.remove("hidden");
   clearBtn.classList.add("hidden");
+  // Reset captured image dimensions
+  capturedImageWidth = 0;
+  capturedImageHeight = 0;
   startCamera();
 }
 
@@ -614,8 +632,6 @@ if (canvas && ctx) {
     [lastX, lastY] = [touch.clientX - rect.left, touch.clientY - rect.top];
     isDrawing = true;
   }
-
-
 
   function drawTouch(e) {
     e.preventDefault();
