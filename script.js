@@ -340,7 +340,7 @@ async function submitAction() {
   emptyCanvas.width = canvas.width;
   emptyCanvas.height = canvas.height;
   if (canvas.toDataURL('image/png') === emptyCanvas.toDataURL('image/png')) {
-    showError('parametersError', 'Please provide a signature');
+    showError получил 'parametersError', 'Please provide a signature');
     return;
   }
   if (!image) {
@@ -417,7 +417,7 @@ function initializeMap() {
 
   map = L.map('map').setView([currentLat, currentLon], 13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19
   }).addTo(map);
 
@@ -587,8 +587,8 @@ async function startCamera() {
       video: {
         facingMode: "user",
         width: { min: 320, ideal: 640, max: 1280 },
-        height: { min: 240, ideal: 480, max: 720 },
-        aspectRatio: { ideal: 4 / 3 }
+        height: { min: 240, ideal: 480, max: 720 }
+        // Removed aspectRatio to allow native orientation
       }
     });
     video.srcObject = stream;
@@ -613,6 +613,33 @@ async function startCamera() {
   }
 }
 
+function adjustVideoOrientation() {
+  const video = document.getElementById("cameraPreview");
+  if (!video) return;
+
+  // Check the video's native dimensions to determine orientation
+  const isVideoPortrait = video.videoHeight > video.videoWidth;
+
+  // Apply CSS to ensure the video fits correctly without forcing rotation
+  video.style.transform = 'none'; // Remove rotation by default
+  video.style.width = '100%';
+  video.style.height = 'auto';
+
+  // If the video is portrait but the device is landscape, or vice versa, adjust
+  const isDevicePortrait = screen.orientation?.type.includes('portrait') || window.innerWidth < window.innerHeight;
+  if (isVideoPortrait && !isDevicePortrait) {
+    // Video is portrait, device is landscape: rotate to match
+    video.style.transform = 'rotate(90deg)';
+    video.style.width = '100%';
+    video.style.height = 'auto';
+  } else if (!isVideoPortrait && isDevicePortrait) {
+    // Video is landscape, device is portrait: rotate to match
+    video.style.transform = 'rotate(-90deg)';
+    video.style.width = '100%';
+    video.style.height = 'auto';
+  }
+}
+
 async function captureImage() {
   const video = document.getElementById("cameraPreview");
   const img = document.getElementById("capturedImage");
@@ -633,17 +660,25 @@ async function captureImage() {
     return;
   }
 
+  const isVideoPortrait = height > width;
+  const isDevicePortrait = screen.orientation?.type.includes('portrait') || window.innerWidth < window.innerHeight;
+
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
   const ctx = canvas.getContext("2d");
 
-  if (screen.orientation.type.includes('portrait')) {
-    ctx.translate(width / 2, height / 2);
-    ctx.rotate((90 * Math.PI) / 180);
-    ctx.translate(-height / 2, -width / 2);
-    ctx.drawImage(video, 0, 0, height, width);
+  // Set canvas dimensions based on orientation
+  if (isVideoPortrait === isDevicePortrait) {
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(video, 0, 0, width, height);
   } else {
+    // Swap width and height for rotated video
+    canvas.width = height;
+    canvas.height = width;
+    ctx.translate(height / 2, width / 2);
+    // Rotate based on orientation mismatch
+    ctx.rotate(isVideoPortrait ? (90 * Math.PI) / 180 : (-90 * Math.PI) / 180);
+    ctx.translate(-width / 2, -height / 2);
     ctx.drawImage(video, 0, 0, width, height);
   }
 
@@ -654,8 +689,8 @@ async function captureImage() {
   startCameraBtn.classList.add("hidden");
   clearBtn.classList.remove("hidden");
 
-  capturedImageWidth = width;
-  capturedImageHeight = height;
+  capturedImageWidth = canvas.width;
+  capturedImageHeight = canvas.height;
   console.log(`Captured image dimensions set: ${capturedImageWidth}x${capturedImageHeight}`);
 
   video.srcObject.getTracks().forEach(track => track.stop());
@@ -705,29 +740,13 @@ document.getElementById("cameraFallback").addEventListener("change", (e) => {
   }
 });
 
-// Adjust video orientation
-function adjustVideoOrientation() {
-  const video = document.getElementById("cameraPreview");
-  if (!video) return;
-
-  if (screen.orientation.type.includes('portrait')) {
-    video.style.transform = 'rotate(90deg)';
-    video.style.width = '100%';
-    video.style.height = 'auto';
-  } else {
-    video.style.transform = 'none';
-    video.style.width = '100%';
-    video.style.height = 'auto';
-  }
-}
-
 // Handle orientation changes
 window.addEventListener('orientationchange', () => {
   const video = document.getElementById("cameraPreview");
   if (video && video.srcObject) {
     video.srcObject.getTracks().forEach(track => track.stop());
     video.srcObject = null;
-    startCamera();
+    setTimeout(startCamera, 100); // Delay to ensure orientation stabilizes
   }
 });
 

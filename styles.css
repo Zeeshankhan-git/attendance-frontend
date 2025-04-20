@@ -183,7 +183,6 @@ body.dark-mode canvas {
     width: 100%;
     max-width: 480px;
     height: auto;
-    aspect-ratio: 4 / 3;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
     margin: 0 auto;
@@ -205,6 +204,7 @@ body.dark-mode .camera-box {
     position: absolute;
     top: 0;
     left: 0;
+    transform-origin: center;
 }
 
 .camera-box img {
@@ -463,12 +463,12 @@ body.dark-mode #map {
   .camera-box {
     max-width: 100%;
     height: auto;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: unset; /* Allow native video aspect ratio */
   }
   .camera-box video,
   .camera-box img {
-    height: auto;
     width: 100%;
+    height: auto;
     object-fit: contain;
   }
 }
