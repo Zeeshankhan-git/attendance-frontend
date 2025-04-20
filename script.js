@@ -1,11 +1,15 @@
-let API_BASE_URL = "https://attendance-backend-1-78u4.onrender.com/api"; // Updated to deployed backend
+let API_BASE_URL = "https://attendance-backend-1-78u4.onrender.com/api";
 
 let currentAction = 'attendance';
 let geolocationWatchId = null;
 let currentLat = 13.326389;
 let currentLon = 77.128889;
-let capturedImageWidth = 0; // Store captured image dimensions
+let capturedImageWidth = 0;
 let capturedImageHeight = 0;
+let map = null;
+let marker = null;
+let lastFetchTime = { address: 0, weather: 0 };
+const FETCH_DEBOUNCE_MS = 5000;
 
 // Initialize on page load
 window.addEventListener('load', () => {
@@ -14,8 +18,9 @@ window.addEventListener('load', () => {
     showError('parametersError', 'Canvas not supported by this browser');
   }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    document.getElementById("startCameraBtn").disabled = true;
-    showError('parametersError', 'Camera not supported by this browser');
+    document.getElementById("startCameraBtn").classList.add("hidden");
+    document.getElementById("cameraFallback").classList.remove("hidden");
+    showError('parametersError', 'Camera not supported. Please upload an image.');
   }
   if (!navigator.geolocation) {
     showError('parametersError', 'Geolocation not supported by this browser');
@@ -115,7 +120,12 @@ function startGeolocation() {
         fetchAddress(currentLat, currentLon);
         fetchWeather(currentLat, currentLon);
       },
-      error => showError('parametersError', `Geolocation error: ${error.message}`),
+      error => {
+        showError('parametersError', `Geolocation error: ${error.message}`);
+        updateLocationDisplay(currentLat, currentLon);
+        fetchAddress(currentLat, currentLon);
+        fetchWeather(currentLat, currentLon);
+      },
       { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
     );
   }
@@ -160,6 +170,7 @@ function resetParametersPage() {
   const startCameraBtn = document.getElementById("startCameraBtn");
   const clearBtn = document.getElementById("clearBtn");
   const descriptionBox = document.getElementById("descriptionBox");
+  const cameraFallback = document.getElementById("cameraFallback");
 
   if (video && video.srcObject) {
     video.srcObject.getTracks().forEach(track => track.stop());
@@ -171,8 +182,9 @@ function resetParametersPage() {
     img.src = "";
   }
   if (captureBtn) captureBtn.classList.add("hidden");
-  if (startCameraBtn) startCameraBtn.classList.add("hidden");
+  if (startCameraBtn) startCameraBtn.classList.remove("hidden");
   if (clearBtn) clearBtn.classList.add("hidden");
+  if (cameraFallback) cameraFallback.classList.add("hidden");
   clearSignature();
   if (descriptionBox) descriptionBox.value = "";
   clearErrors();
@@ -335,7 +347,6 @@ async function submitAction() {
     showError('parametersError', 'Please capture a selfie');
     return;
   }
-  // Log captured image dimensions for debugging
   console.log(`Submitting with image dimensions: ${capturedImageWidth}x${capturedImageHeight}`);
 
   const submissionData = {
@@ -378,9 +389,12 @@ function openLocationModal() {
   if (modal) {
     modal.classList.remove("hidden");
     document.getElementById("customLocationName").value = "";
-    document.getElementById("customLatitude").value = currentLat.toFixed(6);
-    document.getElementById("customLongitude").value = currentLon.toFixed(6);
+    document.getElementById("selectedLat").innerText = "Click on map";
+    document.getElementById("selectedLon").innerText = "Click on map";
+    document.getElementById("customLatitude").value = "";
+    document.getElementById("customLongitude").value = "";
     clearErrors();
+    initializeMap();
   }
 }
 
@@ -388,8 +402,41 @@ function closeLocationModal() {
   const modal = document.getElementById("locationModal");
   if (modal) {
     modal.classList.add("hidden");
+    if (map) {
+      map.remove();
+      map = null;
+      marker = null;
+    }
     clearErrors();
   }
+}
+
+function initializeMap() {
+  const mapContainer = document.getElementById("map");
+  if (!mapContainer) return;
+
+  map = L.map('map').setView([currentLat, currentLon], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(map);
+
+  map.on('click', (e) => {
+    const { lat, lng } = e.latlng;
+    if (marker) map.removeLayer(marker);
+    marker = L.marker([lat, lng]).addTo(map);
+    document.getElementById("selectedLat").innerText = lat.toFixed(6);
+    document.getElementById("selectedLon").innerText = lng.toFixed(6);
+    document.getElementById("customLatitude").value = lat;
+    document.getElementById("customLongitude").value = lng;
+  });
+
+  // Add initial marker at current location
+  marker = L.marker([currentLat, currentLon]).addTo(map);
+  document.getElementById("selectedLat").innerText = currentLat.toFixed(6);
+  document.getElementById("selectedLon").innerText = currentLon.toFixed(6);
+  document.getElementById("customLatitude").value = currentLat;
+  document.getElementById("customLongitude").value = currentLon;
 }
 
 async function saveCustomLocation() {
@@ -402,11 +449,11 @@ async function saveCustomLocation() {
     return;
   }
   if (isNaN(latitude) || latitude < -90 || latitude > 90) {
-    showError('locationError', 'Please enter a valid latitude (-90 to 90)');
+    showError('locationError', 'Please select a valid location on the map');
     return;
   }
   if (isNaN(longitude) || longitude < -180 || longitude > 180) {
-    showError('locationError', 'Please enter a valid longitude (-180 to 180)');
+    showError('locationError', 'Please select a valid location on the map');
     return;
   }
 
@@ -421,15 +468,7 @@ async function saveCustomLocation() {
         longitude
       })
     });
-    const responseText = await response.text();
-    console.log(`Save location response (raw): ${responseText}`);
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (jsonErr) {
-      console.error(`Failed to parse JSON: ${jsonErr.message}`);
-      throw new Error(`Invalid JSON response: ${responseText}`);
-    }
+    const data = await response.json();
     if (response.ok && data.status === 'success') {
       currentLat = latitude;
       currentLon = longitude;
@@ -439,17 +478,11 @@ async function saveCustomLocation() {
       alert(`Location "${locationName}" saved successfully!`);
       closeLocationModal();
     } else {
-      showError('locationError', data.message || `Failed to save location: ${responseText}`);
+      showError('locationError', data.message || 'Failed to save location');
     }
   } catch (err) {
-    console.log(`Mocking save location response due to error: ${err.message}`);
-    currentLat = latitude;
-    currentLon = longitude;
-    updateLocationDisplay(currentLat, currentLon);
-    fetchAddress(currentLat, currentLon);
-    fetchWeather(currentLat, currentLon);
-    alert(`Location "${locationName}" saved successfully (mock response)!`);
-    closeLocationModal();
+    console.error('Save location error:', err);
+    showError('locationError', 'Cannot connect to server');
   }
 }
 
@@ -469,11 +502,20 @@ function convertToDMS(lat, lon) {
 async function fetchAddress(lat, lon) {
   const addressEl = document.getElementById("address");
   if (!addressEl) return;
+  const now = Date.now();
+  if (now - lastFetchTime.address < FETCH_DEBOUNCE_MS) return;
+  lastFetchTime.address = now;
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, { timeout: 5000 });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
     const data = await response.json();
     addressEl.innerText = data.display_name || "Not available";
-  } catch {
+  } catch (err) {
+    console.error('Address fetch error:', err);
     addressEl.innerText = "Error fetching address";
     setTimeout(() => addressEl.innerText = "Not available", 1000);
   }
@@ -482,12 +524,38 @@ async function fetchAddress(lat, lon) {
 async function fetchWeather(lat, lon) {
   const weatherEl = document.getElementById("weather");
   if (!weatherEl) return;
+  const now = Date.now();
+  if (now - lastFetchTime.weather < FETCH_DEBOUNCE_MS) return;
+  lastFetchTime.weather = now;
   try {
-    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}¤t_weather=true`, { timeout: 5000 });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`, {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
     const data = await response.json();
-    weatherEl.innerText = data.current_weather ? `${data.current_weather.temperature}°C` : "Not available";
-  } catch {
-    weatherEl.innerText = "Not available";
+    if (data.current_weather) {
+      const { temperature, weathercode } = data.current_weather;
+      const weatherDesc = {
+        0: 'Clear',
+        1: 'Mostly Clear',
+        2: 'Partly Cloudy',
+        3: 'Overcast',
+        61: 'Rain',
+        80: 'Showers'
+      }[weathercode] || 'Unknown';
+      weatherEl.innerText = `${temperature}°C, ${weatherDesc}`;
+    } else {
+      weatherEl.innerText = "Weather data unavailable";
+    }
+  } catch (err) {
+    console.error('Weather fetch error:', err.message);
+    weatherEl.innerText = "Unable to fetch weather";
+    setTimeout(() => fetchWeather(lat, lon), 10000);
   }
 }
 
@@ -505,9 +573,12 @@ async function startCamera() {
   const captureBtn = document.getElementById("captureBtn");
   const startCameraBtn = document.getElementById("startCameraBtn");
   const clearBtn = document.getElementById("clearBtn");
+  const cameraFallback = document.getElementById("cameraFallback");
 
   if (!video || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    showError('parametersError', 'Camera not supported');
+    showError('parametersError', 'Camera not supported. Please upload an image.');
+    video.classList.add("hidden");
+    cameraFallback.classList.remove("hidden");
     return;
   }
 
@@ -515,8 +586,9 @@ async function startCamera() {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "user",
-        width: { min: 320, ideal: 640 },
-        height: { min: 240, ideal: 480 }
+        width: { min: 320, ideal: 640, max: 1280 },
+        height: { min: 240, ideal: 480, max: 720 },
+        aspectRatio: { ideal: 4 / 3 }
       }
     });
     video.srcObject = stream;
@@ -526,10 +598,18 @@ async function startCamera() {
       captureBtn.classList.remove("hidden");
       startCameraBtn.classList.add("hidden");
       clearBtn.classList.add("hidden");
+      cameraFallback.classList.add("hidden");
       console.log(`Camera resolution: ${video.videoWidth}x${video.videoHeight}`);
+      adjustVideoOrientation();
     };
   } catch (err) {
     showError('parametersError', `Camera error: ${err.message}`);
+    if (err.name === 'NotAllowedError') {
+      showError('parametersError', 'Camera access denied. Please allow camera permissions.');
+    }
+    console.error('Camera initialization failed:', err);
+    video.classList.add("hidden");
+    cameraFallback.classList.remove("hidden");
   }
 }
 
@@ -556,7 +636,16 @@ async function captureImage() {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  canvas.getContext("2d").drawImage(video, 0, 0, width, height);
+  const ctx = canvas.getContext("2d");
+
+  if (screen.orientation.type.includes('portrait')) {
+    ctx.translate(width / 2, height / 2);
+    ctx.rotate((90 * Math.PI) / 180);
+    ctx.translate(-height / 2, -width / 2);
+    ctx.drawImage(video, 0, 0, height, width);
+  } else {
+    ctx.drawImage(video, 0, 0, width, height);
+  }
 
   img.src = canvas.toDataURL("image/png");
   img.classList.remove("hidden");
@@ -565,7 +654,6 @@ async function captureImage() {
   startCameraBtn.classList.add("hidden");
   clearBtn.classList.remove("hidden");
 
-  // Store image dimensions
   capturedImageWidth = width;
   capturedImageHeight = height;
   console.log(`Captured image dimensions set: ${capturedImageWidth}x${capturedImageHeight}`);
@@ -578,6 +666,7 @@ function clearImage() {
   const img = document.getElementById("capturedImage");
   const captureBtn = document.getElementById("captureBtn");
   const clearBtn = document.getElementById("clearBtn");
+  const cameraFallback = document.getElementById("cameraFallback");
 
   if (img) {
     img.src = "";
@@ -585,11 +674,62 @@ function clearImage() {
   }
   captureBtn.classList.remove("hidden");
   clearBtn.classList.add("hidden");
-  // Reset captured image dimensions
+  cameraFallback.classList.add("hidden");
   capturedImageWidth = 0;
   capturedImageHeight = 0;
   startCamera();
 }
+
+// Camera fallback for devices without WebRTC
+document.getElementById("cameraFallback").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = document.getElementById("capturedImage");
+      img.src = reader.result;
+      img.classList.remove("hidden");
+      document.getElementById("cameraPreview").classList.add("hidden");
+      document.getElementById("captureBtn").classList.add("hidden");
+      document.getElementById("clearBtn").classList.remove("hidden");
+      document.getElementById("cameraFallback").classList.add("hidden");
+      const tempImg = new Image();
+      tempImg.src = reader.result;
+      tempImg.onload = () => {
+        capturedImageWidth = tempImg.width;
+        capturedImageHeight = tempImg.height;
+        console.log(`Fallback image dimensions: ${capturedImageWidth}x${capturedImageHeight}`);
+      };
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// Adjust video orientation
+function adjustVideoOrientation() {
+  const video = document.getElementById("cameraPreview");
+  if (!video) return;
+
+  if (screen.orientation.type.includes('portrait')) {
+    video.style.transform = 'rotate(90deg)';
+    video.style.width = '100%';
+    video.style.height = 'auto';
+  } else {
+    video.style.transform = 'none';
+    video.style.width = '100%';
+    video.style.height = 'auto';
+  }
+}
+
+// Handle orientation changes
+window.addEventListener('orientationchange', () => {
+  const video = document.getElementById("cameraPreview");
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
+    video.srcObject = null;
+    startCamera();
+  }
+});
 
 // Signature handling
 const canvas = document.getElementById("signaturePad");

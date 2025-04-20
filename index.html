@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <meta name="theme-color" content="#3182ce"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
@@ -11,6 +11,7 @@
   <title>Attendance System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -62,39 +63,46 @@
 <section id="parametersPage" class="page hidden" data-page>
   <div class="card">
     <h2 class="mb-6" id="parametersTitle"></h2>
-    <div class="info-box mb-4">
-      <p><strong>Date & Time:</strong> <span id="timestamp"></span></p>
-    </div>
-    <div class="info-box mb-4">
-      <div class="flex justify-between items-center">
-        <p><strong>Location:</strong> <span id="location">13°19'35"N 77°7'44"E</span></p>
-        <button onclick="openLocationModal()" class="bg-green-600">+</button>
+    <div class="parameters-container">
+      <div class="parameters-left">
+        <div class="info-box mb-4">
+          <p><strong>Date & Time:</strong> <span id="timestamp"></span></p>
+        </div>
+        <div class="info-box mb-4">
+          <div class="flex justify-between items-center">
+            <p><strong>Location:</strong> <span id="location">13°19'35"N 77°7'44"E</span></p>
+            <button onclick="openLocationModal()" class="bg-green-600">+</button>
+          </div>
+          <p><strong>Address:</strong> <span id="address">Fetching...</span></p>
+          <p class="info-box weather-box" onclick="openGoogleMaps()">
+            <span class="weather-content">
+              <strong>Weather:</strong> <span id="weather">Fetching...</span>
+              <svg class="weather-icon" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+              </svg>
+            </span>
+          </p>
+        </div>
       </div>
-      <p><strong>Address:</strong> <span id="address">Fetching...</span></p>
-      <p class="info-box weather-box" onclick="openGoogleMaps()">
-        <span class="weather-content">
-          <strong>Weather:</strong> <span id="weather">Fetching...</span>
-          <svg class="weather-icon" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-          </svg>
-        </span>
-      </p>
+      <div class="parameters-right">
+        <h3 class="section-title">Selfie</h3>
+        <div class="camera-box">
+          <video id="cameraPreview" autoplay playsinline></video>
+          <img id="capturedImage" class="hidden">
+          <input type="file" id="cameraFallback" accept="image/*" capture="user" class="hidden">
+        </div>
+        <div class="center">
+          <button id="startCameraBtn" onclick="startCamera()" class="bg-indigo-600 mt-4">Start Camera</button>
+          <button onclick="captureImage()" class="bg-gray-700 mt-4 hidden" id="captureBtn">Take Selfie</button>
+          <button onclick="clearImage()" class="bg-gray-700 mt-4 hidden" id="clearBtn">Clear Image</button>
+        </div>
+        <h3 class="section-title mt-6">Signature</h3>
+        <canvas id="signaturePad" width="340" height="150"></canvas>
+        <div class="center"><button onclick="clearSignature()" class="bg-gray-700 mt-4">Reset</button></div>
+        <h3 class="section-title mt-6">Description</h3>
+        <textarea id="descriptionBox" placeholder="Enter any additional notes here (optional)" rows="4" class="mt-2"></textarea>
+      </div>
     </div>
-    <h3 class="section-title">Selfie</h3>
-    <div class="camera-box">
-      <video id="cameraPreview" autoplay playsinline></video>
-      <img id="capturedImage" class="hidden">
-    </div>
-    <div class="center">
-      <button id="startCameraBtn" onclick="startCamera()" class="bg-indigo-600 mt-4">Start Camera</button>
-      <button onclick="captureImage()" class="bg-gray-700 mt-4 hidden" id="captureBtn">Take Selfie</button>
-      <button onclick="clearImage()" class="bg-gray-700 mt-4 hidden" id="clearBtn">Clear Image</button>
-    </div>
-    <h3 class="section-title mt-6">Signature</h3>
-    <canvas id="signaturePad" width="340" height="150"></canvas>
-    <div class="center"><button onclick="clearSignature()" class="bg-gray-700 mt-4">Reset</button></div>
-    <h3 class="section-title mt-6">Description</h3>
-    <textarea id="descriptionBox" placeholder="Enter any additional notes here (optional)" rows="4" class="mt-2"></textarea>
     <div id="parametersError" class="error-text hidden"></div>
     <div class="center">
       <button onclick="submitAction()" class="bg-indigo-600 mt-6" id="submitBtn">Submit</button>
@@ -127,16 +135,22 @@
   <div class="modal-content">
     <h3 class="text-lg font-semibold">Save Custom Location</h3>
     <input type="text" id="customLocationName" placeholder="Location Name" class="mt-4 mb-4">
-    <input type="text" id="customLatitude" placeholder="Latitude (e.g., 13.326389)" class="mb-4">
-    <input type="text" id="customLongitude" placeholder="Longitude (e.g., 77.128889)" class="mb-4">
+    <div id="map" style="height: 300px; width: 100%; border-radius: 8px;"></div>
+    <div class="mt-4">
+      <p><strong>Selected Latitude:</strong> <span id="selectedLat">Click on map</span></p>
+      <p><strong>Selected Longitude:</strong> <span id="selectedLon">Click on map</span></p>
+      <input type="hidden" id="customLatitude">
+      <input type="hidden" id="customLongitude">
+    </div>
     <div id="locationError" class="error-text hidden"></div>
-    <div class="center">
+    <div class="center mt-4">
       <button onclick="saveCustomLocation()" class="bg-indigo-600">Save</button>
       <button onclick="closeLocationModal()" class="bg-red-600">Cancel</button>
     </div>
   </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

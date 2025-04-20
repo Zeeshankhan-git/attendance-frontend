@@ -41,6 +41,20 @@ body.dark-mode .card {
     border: 1px solid #4a5568;
 }
 
+#parametersPage .card {
+    max-width: 900px;
+}
+
+.parameters-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.parameters-left, .parameters-right {
+    flex: 1;
+}
+
 .section-title {
     font-weight: 600;
     margin-top: 20px;
@@ -168,7 +182,8 @@ body.dark-mode canvas {
 .camera-box {
     width: 100%;
     max-width: 480px;
-    height: 360px;
+    height: auto;
+    aspect-ratio: 4 / 3;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
     margin: 0 auto;
@@ -186,7 +201,7 @@ body.dark-mode .camera-box {
 .camera-box img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     position: absolute;
     top: 0;
     left: 0;
@@ -198,6 +213,22 @@ body.dark-mode .camera-box {
 
 .camera-box video {
     z-index: 5;
+}
+
+.camera-box input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #2d3748;
+    text-align: center;
+}
+
+body.dark-mode .camera-box input[type="file"] {
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    color: #e2e8f0;
 }
 
 .info-box {
@@ -395,8 +426,49 @@ body.dark-mode .theme-toggle svg {
     fill: #e2e8f0;
 }
 
+#map {
+    height: 300px;
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: border 0.3s ease;
+}
+
+body.dark-mode #map {
+    border: 1px solid #4a5568;
+}
+
+@media (min-width: 640px) {
+  #parametersPage .card {
+    padding: 40px;
+  }
+  .parameters-container {
+    flex-direction: row;
+    gap: 40px;
+  }
+  .parameters-left, .parameters-right {
+    flex: 1;
+    min-width: 0;
+  }
+  .camera-box {
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 640px) {
-  .card { max-width: 100%; padding: 16px; }
-  .camera-box { max-width: 100%; height: auto; }
-  .camera-box video, .camera-box img { height: 200px; }
+  .card {
+    max-width: 100%;
+    padding: 16px;
+  }
+  .camera-box {
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+  .camera-box video,
+  .camera-box img {
+    height: auto;
+    width: 100%;
+    object-fit: contain;
+  }
 }
