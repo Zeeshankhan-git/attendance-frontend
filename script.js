@@ -340,7 +340,7 @@ async function submitAction() {
   emptyCanvas.width = canvas.width;
   emptyCanvas.height = canvas.height;
   if (canvas.toDataURL('image/png') === emptyCanvas.toDataURL('image/png')) {
-    showError получил 'parametersError', 'Please provide a signature');
+    showError('parametersError', 'Please provide a signature');
     return;
   }
   if (!image) {
@@ -586,9 +586,8 @@ async function startCamera() {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "user",
-        width: { min: 320, ideal: 640, max: 1280 },
-        height: { min: 240, ideal: 480, max: 720 }
-        // Removed aspectRatio to allow native orientation
+        width: { ideal: 640 },
+        height: { ideal: 480 }
       }
     });
     video.srcObject = stream;
@@ -600,7 +599,6 @@ async function startCamera() {
       clearBtn.classList.add("hidden");
       cameraFallback.classList.add("hidden");
       console.log(`Camera resolution: ${video.videoWidth}x${video.videoHeight}`);
-      adjustVideoOrientation();
     };
   } catch (err) {
     showError('parametersError', `Camera error: ${err.message}`);
@@ -610,33 +608,6 @@ async function startCamera() {
     console.error('Camera initialization failed:', err);
     video.classList.add("hidden");
     cameraFallback.classList.remove("hidden");
-  }
-}
-
-function adjustVideoOrientation() {
-  const video = document.getElementById("cameraPreview");
-  if (!video) return;
-
-  // Check the video's native dimensions to determine orientation
-  const isVideoPortrait = video.videoHeight > video.videoWidth;
-
-  // Apply CSS to ensure the video fits correctly without forcing rotation
-  video.style.transform = 'none'; // Remove rotation by default
-  video.style.width = '100%';
-  video.style.height = 'auto';
-
-  // If the video is portrait but the device is landscape, or vice versa, adjust
-  const isDevicePortrait = screen.orientation?.type.includes('portrait') || window.innerWidth < window.innerHeight;
-  if (isVideoPortrait && !isDevicePortrait) {
-    // Video is portrait, device is landscape: rotate to match
-    video.style.transform = 'rotate(90deg)';
-    video.style.width = '100%';
-    video.style.height = 'auto';
-  } else if (!isVideoPortrait && isDevicePortrait) {
-    // Video is landscape, device is portrait: rotate to match
-    video.style.transform = 'rotate(-90deg)';
-    video.style.width = '100%';
-    video.style.height = 'auto';
   }
 }
 
@@ -660,27 +631,29 @@ async function captureImage() {
     return;
   }
 
-  const isVideoPortrait = height > width;
-  const isDevicePortrait = screen.orientation?.type.includes('portrait') || window.innerWidth < window.innerHeight;
-
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
+  canvas.width = width;
+  canvas.height = height;
 
-  // Set canvas dimensions based on orientation
-  if (isVideoPortrait === isDevicePortrait) {
-    canvas.width = width;
-    canvas.height = height;
-    ctx.drawImage(video, 0, 0, width, height);
-  } else {
-    // Swap width and height for rotated video
-    canvas.width = height;
-    canvas.height = width;
-    ctx.translate(height / 2, width / 2);
-    // Rotate based on orientation mismatch
-    ctx.rotate(isVideoPortrait ? (90 * Math.PI) / 180 : (-90 * Math.PI) / 180);
+  // Detect device orientation
+  const isDevicePortrait = window.matchMedia("(orientation: portrait)").matches;
+
+  // On mobile devices, front camera may be mirrored; adjust based on device orientation
+  if (/Mobi|Android|iPhone|iPad/.test(navigator.userAgent)) {
+    ctx.translate(width / 2, height / 2);
+    // Mirror the image horizontally (front camera is typically mirrored)
+    ctx.scale(-1, 1);
+    // If device is in portrait, rotate to match native video orientation
+    if (isDevicePortrait && height > width) {
+      ctx.rotate((90 * Math.PI) / 180);
+    } else if (!isDevicePortrait && width > height) {
+      ctx.rotate((-90 * Math.PI) / 180);
+    }
     ctx.translate(-width / 2, -height / 2);
-    ctx.drawImage(video, 0, 0, width, height);
   }
+
+  ctx.drawImage(video, 0, 0, width, height);
 
   img.src = canvas.toDataURL("image/png");
   img.classList.remove("hidden");
