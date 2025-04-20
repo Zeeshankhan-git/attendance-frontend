@@ -530,7 +530,7 @@ async function fetchWeather(lat, lon) {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`, {
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}¤t_weather=true`, {
       signal: controller.signal
     });
     clearTimeout(timeoutId);
@@ -583,13 +583,17 @@ async function startCamera() {
   }
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
+    // Dynamically set video constraints based on device orientation
+    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+    const constraints = {
       video: {
         facingMode: "user",
-        width: { ideal: 640 },
-        height: { ideal: 480 }
+        width: { ideal: isPortrait ? 480 : 640 },
+        height: { ideal: isPortrait ? 640 : 480 }
       }
-    });
+    };
+
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
     video.srcObject = stream;
     video.onloadedmetadata = () => {
       video.play();
@@ -638,16 +642,17 @@ async function captureImage() {
 
   // Detect device orientation
   const isDevicePortrait = window.matchMedia("(orientation: portrait)").matches;
+  const isVideoPortrait = height > width;
 
-  // On mobile devices, front camera may be mirrored; adjust based on device orientation
+  // Adjust for mobile devices
   if (/Mobi|Android|iPhone|iPad/.test(navigator.userAgent)) {
     ctx.translate(width / 2, height / 2);
-    // Mirror the image horizontally (front camera is typically mirrored)
+    // Mirror horizontally (front camera is typically mirrored)
     ctx.scale(-1, 1);
-    // If device is in portrait, rotate to match native video orientation
-    if (isDevicePortrait && height > width) {
+    // Adjust rotation based on device and video orientation
+    if (isDevicePortrait && !isVideoPortrait) {
       ctx.rotate((90 * Math.PI) / 180);
-    } else if (!isDevicePortrait && width > height) {
+    } else if (!isDevicePortrait && isVideoPortrait) {
       ctx.rotate((-90 * Math.PI) / 180);
     }
     ctx.translate(-width / 2, -height / 2);
@@ -719,7 +724,7 @@ window.addEventListener('orientationchange', () => {
   if (video && video.srcObject) {
     video.srcObject.getTracks().forEach(track => track.stop());
     video.srcObject = null;
-    setTimeout(startCamera, 100); // Delay to ensure orientation stabilizes
+    setTimeout(startCamera, 200); // Increased delay to ensure orientation stabilizes
   }
 });
 

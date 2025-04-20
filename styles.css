@@ -182,7 +182,7 @@ body.dark-mode canvas {
 .camera-box {
     width: 100%;
     max-width: 480px;
-    height: auto;
+    aspect-ratio: 4 / 3; /* Default to landscape */
     border-radius: 12px;
     border: 1px solid #e2e8f0;
     margin: 0 auto;
@@ -192,25 +192,31 @@ body.dark-mode canvas {
     transition: border 0.3s ease;
 }
 
-body.dark-mode .camera-box {
-    border: 1px solid #4a5568;
+@media (orientation: portrait) {
+    .camera-box {
+        aspect-ratio: 3 / 4; /* Portrait mode */
+    }
 }
 
-.camera-box video,
-.camera-box img {
+.camera-box video {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover; /* Changed from contain to cover for better fill */
     position: absolute;
     top: 0;
     left: 0;
-    transform-origin: center;
+    transform: none; /* Remove any forced rotations */
 }
 
 .camera-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
     z-index: 10;
 }
-
 .camera-box video {
     z-index: 5;
 }
