@@ -566,7 +566,6 @@ function openGoogleMaps() {
     showError('parametersError', 'Location not available');
   }
 }
-
 // Camera handling
 async function startCamera() {
   const video = document.getElementById("cameraPreview");
@@ -588,9 +587,9 @@ async function startCamera() {
     const constraints = {
       video: {
         facingMode: "user",
-        width: { ideal: isPortrait ? 480 : 640, max: 1280 },
-        height: { ideal: isPortrait ? 640 : 480, max: 720 },
-        aspectRatio: isPortrait ? 0.75 : 1.3333 // 3:4 for portrait, 4:3 for landscape
+        width: { ideal: isPortrait ? 640 : 480, max: 1280 }, // Swapped for portrait priority
+        height: { ideal: isPortrait ? 480 : 640, max: 720 }, // Swapped for portrait priority
+        aspectRatio: isPortrait ? 1.3333 : 0.75 // 4:3 for portrait, 3:4 for landscape
       }
     };
 
@@ -598,6 +597,12 @@ async function startCamera() {
     video.srcObject = stream;
     video.onloadedmetadata = () => {
       video.play();
+      // Apply rotation to preview based on orientation
+      if (isPortrait && video.videoWidth > video.videoHeight) {
+        video.style.transform = 'rotate(90deg) translateY(-100%)';
+      } else if (!isPortrait && video.videoHeight > video.videoWidth) {
+        video.style.transform = 'rotate(-90deg) translateX(-100%)';
+      }
       video.classList.remove("hidden");
       captureBtn.classList.remove("hidden");
       startCameraBtn.classList.add("hidden");
