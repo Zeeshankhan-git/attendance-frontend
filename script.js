@@ -588,8 +588,9 @@ async function startCamera() {
     const constraints = {
       video: {
         facingMode: "user",
-        width: { ideal: isPortrait ? 480 : 640 },
-        height: { ideal: isPortrait ? 640 : 480 }
+        width: { ideal: isPortrait ? 480 : 640, max: 1280 },
+        height: { ideal: isPortrait ? 640 : 480, max: 720 },
+        aspectRatio: isPortrait ? 0.75 : 1.3333 // 3:4 for portrait, 4:3 for landscape
       }
     };
 
@@ -646,19 +647,26 @@ async function captureImage() {
 
   // Adjust for mobile devices
   if (/Mobi|Android|iPhone|iPad/.test(navigator.userAgent)) {
+    ctx.save();
     ctx.translate(width / 2, height / 2);
     // Mirror horizontally (front camera is typically mirrored)
     ctx.scale(-1, 1);
     // Adjust rotation based on device and video orientation
     if (isDevicePortrait && !isVideoPortrait) {
       ctx.rotate((90 * Math.PI) / 180);
+      canvas.width = height;
+      canvas.height = width;
     } else if (!isDevicePortrait && isVideoPortrait) {
       ctx.rotate((-90 * Math.PI) / 180);
+      canvas.width = height;
+      canvas.height = width;
     }
     ctx.translate(-width / 2, -height / 2);
+    ctx.drawImage(video, 0, 0, width, height);
+    ctx.restore();
+  } else {
+    ctx.drawImage(video, 0, 0, width, height);
   }
-
-  ctx.drawImage(video, 0, 0, width, height);
 
   img.src = canvas.toDataURL("image/png");
   img.classList.remove("hidden");
